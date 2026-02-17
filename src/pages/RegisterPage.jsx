@@ -1,12 +1,67 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../services/AuthContext'
 
 export default function RegisterPage() {
   const [userType, setUserType] = useState('sme')
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    niche: '',
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const navigate = useNavigate()
+  const { sign } = useAuth()
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Register:', { userType })
+    setError('')
+    setLoading(true)
+
+    try {
+      // Validation
+      if (!formData.name || !formData.email || !formData.password) {
+        throw new Error('Please fill in all required fields')
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        throw new Error('Passwords do not match')
+      }
+
+      if (formData.password.length < 6) {
+        throw new Error('Password must be at least 6 characters')
+      }
+
+      if (userType === 'influencer' && !formData.niche) {
+        throw new Error('Please select a niche')
+      }
+
+      // Register user
+      const result = await sign.register(formData.email, formData.password, {
+        name: formData.name,
+        user_type: userType,
+        niche: userType === 'influencer' ? formData.niche : null
+      })
+
+      if (result.error) {
+        setError(result.error)
+      } else {
+        // Navigate to home on successful registration
+        navigate('/')
+      }
+    } catch (err) {
+      setError(err.message || 'Registration failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -18,6 +73,12 @@ export default function RegisterPage() {
             <span className="text-gray-600">Connect</span>
           </h1>
           <p className="text-center text-gray-600 mb-8">Create your account</p>
+
+          {error && (
+            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
 
           <div className="mb-6 flex gap-4">
             <button 
@@ -47,7 +108,10 @@ export default function RegisterPage() {
               <label className="block font-semibold mb-2">Full Name</label>
               <input 
                 type="text"
+                name="name"
                 placeholder="John Doe"
+                value={formData.name}
+                onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
                 required
               />
@@ -57,7 +121,10 @@ export default function RegisterPage() {
               <label className="block font-semibold mb-2">Email Address</label>
               <input 
                 type="email"
+                name="email"
                 placeholder="you@example.com"
+                value={formData.email}
+                onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
                 required
               />
@@ -67,7 +134,10 @@ export default function RegisterPage() {
               <label className="block font-semibold mb-2">Password</label>
               <input 
                 type="password"
+                name="password"
                 placeholder="••••••••"
+                value={formData.password}
+                onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
                 required
               />
@@ -77,7 +147,10 @@ export default function RegisterPage() {
               <label className="block font-semibold mb-2">Confirm Password</label>
               <input 
                 type="password"
+                name="confirmPassword"
                 placeholder="••••••••"
+                value={formData.confirmPassword}
+                onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
                 required
               />
@@ -86,13 +159,19 @@ export default function RegisterPage() {
             {userType === 'influencer' && (
               <div>
                 <label className="block font-semibold mb-2">Niche / Category</label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black">
-                  <option>Select your niche</option>
-                  <option>Beauty & Cosmetics</option>
-                  <option>Fashion</option>
-                  <option>Technology</option>
-                  <option>Fitness & Wellness</option>
-                  <option>Food & Lifestyle</option>
+                <select 
+                  name="niche"
+                  value={formData.niche}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
+                  required
+                >
+                  <option value="">Select your niche</option>
+                  <option value="Beauty & Cosmetics">Beauty & Cosmetics</option>
+                  <option value="Fashion">Fashion</option>
+                  <option value="Technology">Technology</option>
+                  <option value="Fitness & Wellness">Fitness & Wellness</option>
+                  <option value="Food & Lifestyle">Food & Lifestyle</option>
                 </select>
               </div>
             )}
@@ -104,9 +183,10 @@ export default function RegisterPage() {
 
             <button 
               type="submit"
-              className="w-full btn-primary"
+              disabled={loading}
+              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create Account
+              {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 

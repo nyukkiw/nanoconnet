@@ -1,15 +1,38 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../services/AuthContext'
 
 export default function LoginPage() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  })
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const navigate = useNavigate()
+  const { sign } = useAuth()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Login:', formData)
+    setError('')
+    setLoading(true)
+
+    try {
+      if (!email || !password) {
+        throw new Error('Please fill in all fields')
+      }
+
+      const result = await sign.login(email, password)
+      
+      if (result.error) {
+        setError(result.error)
+      } else {
+        // Navigate to home on successful login
+        navigate('/')
+      }
+    } catch (err) {
+      setError(err.message || 'Login failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -22,12 +45,20 @@ export default function LoginPage() {
           </h1>
           <p className="text-center text-gray-600 mb-8">Sign in to your account</p>
 
+          {error && (
+            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block font-semibold mb-2">Email Address</label>
               <input 
                 type="email"
                 placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
                 required
               />
@@ -38,6 +69,8 @@ export default function LoginPage() {
               <input 
                 type="password"
                 placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
                 required
               />
@@ -53,9 +86,10 @@ export default function LoginPage() {
 
             <button 
               type="submit"
-              className="w-full btn-primary"
+              disabled={loading}
+              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
