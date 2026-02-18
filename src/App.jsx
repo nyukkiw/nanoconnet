@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './services/AuthContext'
 import Navigation from './components/Navigation'
 import Footer from './components/Footer'
+import ProtectedRoute from './components/ProtectedRoute'
 import HomePage from './pages/HomePage'
 import AboutPage from './pages/AboutPage'
 import InfluencerListingPage from './pages/InfluencerListingPage'
@@ -20,15 +21,32 @@ function App() {
           <Navigation />
           <main className="flex-grow">
             <Routes>
+              {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/influencers" element={<InfluencerListingPage />} />
               <Route path="/influencers/:id" element={<InfluencerDetailPage />} />
-              <Route path="/booking" element={<BookingPage />} />
-              <Route path="/recommendations" element={<AIRecommendationsPage />} />
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+
+              {/* Protected Routes - Require Authentication */}
+              <Route 
+                path="/booking" 
+                element={
+                  <ProtectedRoute>
+                    <BookingPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/recommendations" 
+                element={
+                  <ProtectedRoute>
+                    <AIRecommendationsPage />
+                  </ProtectedRoute>
+                } 
+              />
             </Routes>
           </main>
           <Footer />

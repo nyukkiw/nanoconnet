@@ -257,7 +257,7 @@ export default function InfluencerListingPage() {
                     href={`/influencers/${influencer.id}`}
                     className="w-full block text-center bg-black text-white py-2 rounded hover:bg-gray-800 transition font-semibold"
                   >
-                    View Profile
+                    <i className="fas fa-eye mr-2"></i>View Detail
                   </a>
                 </div>
               </div>

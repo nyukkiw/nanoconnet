@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../services/AuthContext'
 
@@ -7,29 +7,53 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const navigate = useNavigate()
-  const { sign } = useAuth()
+  const { sign, isAuthenticated } = useAuth()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/')
+    }
+  }, [isAuthenticated, navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setSuccessMessage('')
     setLoading(true)
 
     try {
       if (!email || !password) {
-        throw new Error('Please fill in all fields')
+        throw new Error('Email dan password harus diisi')
+      }
+
+      if (!email.includes('@')) {
+        throw new Error('Format email tidak valid')
       }
 
       const result = await sign.login(email, password)
       
       if (result.error) {
-        setError(result.error)
+        // Handle specific Supabase auth errors
+        if (result.error.includes('Invalid login credentials')) {
+          setError('Email atau password salah')
+        } else if (result.error.includes('Email not confirmed')) {
+          setError('Email belum dikonfirmasi. Periksa email Anda')
+        } else {
+          setError(result.error)
+        }
       } else {
-        // Navigate to home on successful login
-        navigate('/')
+        // Success
+        setSuccessMessage('Login berhasil! Mengarahkan...')
+        // Delay navigation to show success message
+        setTimeout(() => {
+          navigate('/')
+        }, 1000)
       }
     } catch (err) {
-      setError(err.message || 'Login failed')
+      setError(err.message || 'Login gagal')
     } finally {
       setLoading(false)
     }
@@ -47,7 +71,13 @@ export default function LoginPage() {
 
           {error && (
             <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
+              <i className="fas fa-exclamation-circle mr-2"></i>{error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+              <i className="fas fa-check-circle mr-2"></i>{successMessage}
             </div>
           )}
 

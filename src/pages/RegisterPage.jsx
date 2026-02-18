@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../services/AuthContext'
 
@@ -10,11 +10,21 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     niche: '',
+    phone: '',
+    location: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const navigate = useNavigate()
-  const { sign } = useAuth()
+  const { sign, isAuthenticated } = useAuth()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/')
+    }
+  }, [isAuthenticated, navigate])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -24,41 +34,55 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setSuccessMessage('')
     setLoading(true)
 
     try {
       // Validation
       if (!formData.name || !formData.email || !formData.password) {
-        throw new Error('Please fill in all required fields')
+        throw new Error('Nama, email, dan password harus diisi')
       }
 
       if (formData.password !== formData.confirmPassword) {
-        throw new Error('Passwords do not match')
+        throw new Error('Password tidak cocok')
       }
 
       if (formData.password.length < 6) {
-        throw new Error('Password must be at least 6 characters')
+        throw new Error('Password minimal 6 karakter')
       }
 
       if (userType === 'influencer' && !formData.niche) {
-        throw new Error('Please select a niche')
+        throw new Error('Pilih niche untuk influencer')
       }
 
-      // Register user
+      // Register user dengan Supabase Auth
       const result = await sign.register(formData.email, formData.password, {
         name: formData.name,
         user_type: userType,
-        niche: userType === 'influencer' ? formData.niche : null
+        niche: userType === 'influencer' ? formData.niche : null,
+        phone: formData.phone || null,
+        location: formData.location || null,
       })
 
       if (result.error) {
-        setError(result.error)
+        // Handle specific Supabase auth errors
+        if (result.error.includes('already registered')) {
+          setError('Email sudah terdaftar')
+        } else if (result.error.includes('invalid email')) {
+          setError('Format email tidak valid')
+        } else {
+          setError(result.error)
+        }
       } else {
-        // Navigate to home on successful registration
-        navigate('/')
+        // Success
+        setSuccessMessage('Akun berhasil dibuat! Mengarahkan...')
+        // Delay navigation to show success message
+        setTimeout(() => {
+          navigate('/')
+        }, 1500)
       }
     } catch (err) {
-      setError(err.message || 'Registration failed')
+      setError(err.message || 'Registrasi gagal')
     } finally {
       setLoading(false)
     }
@@ -76,7 +100,13 @@ export default function RegisterPage() {
 
           {error && (
             <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
+              <i className="fas fa-exclamation-circle mr-2"></i>{error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+              <i className="fas fa-check-circle mr-2"></i>{successMessage}
             </div>
           )}
 
@@ -157,24 +187,51 @@ export default function RegisterPage() {
             </div>
 
             {userType === 'influencer' && (
+              <>
+                <div>
+                  <label className="block font-semibold mb-2">Niche / Category *</label>
+                  <select 
+                    name="niche"
+                    value={formData.niche}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
+                    required
+                  >
+                    <option value="">Pilih niche Anda</option>
+                    <option value="Beauty & Cosmetics">Beauty & Cosmetics</option>
+                    <option value="Fashion">Fashion</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Fitness & Wellness">Fitness & Wellness</option>
+                    <option value="Food & Lifestyle">Food & Lifestyle</option>
+                  </select>
+                </div>
+              </>
+            )}
+
+            <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
               <div>
-                <label className="block font-semibold mb-2">Niche / Category</label>
-                <select 
-                  name="niche"
-                  value={formData.niche}
+                <label className="block font-semibold mb-2">Phone (Opsional)</label>
+                <input 
+                  type="tel"
+                  name="phone"
+                  placeholder="+62 812 3456 7890"
+                  value={formData.phone}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
-                  required
-                >
-                  <option value="">Select your niche</option>
-                  <option value="Beauty & Cosmetics">Beauty & Cosmetics</option>
-                  <option value="Fashion">Fashion</option>
-                  <option value="Technology">Technology</option>
-                  <option value="Fitness & Wellness">Fitness & Wellness</option>
-                  <option value="Food & Lifestyle">Food & Lifestyle</option>
-                </select>
+                />
               </div>
-            )}
+              <div>
+                <label className="block font-semibold mb-2">Location (Opsional)</label>
+                <input 
+                  type="text"
+                  name="location"
+                  placeholder="Jakarta, Indonesia"
+                  value={formData.location}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
+                />
+              </div>
+            </div>
 
             <label className="flex items-center text-sm">
               <input type="checkbox" className="mr-2" required />
