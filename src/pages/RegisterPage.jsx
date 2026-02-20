@@ -75,11 +75,11 @@ export default function RegisterPage() {
         }
       } else {
         // Success
-        setSuccessMessage('Akun berhasil dibuat! Mengarahkan...')
-        // Delay navigation to show success message
+        setSuccessMessage('Akun berhasil dibuat! Silakan login.')
+        // Redirect to login page after short delay
         setTimeout(() => {
-          navigate('/')
-        }, 1500)
+          navigate('/login')
+        }, 1200)
       }
     } catch (err) {
       setError(err.message || 'Registrasi gagal')

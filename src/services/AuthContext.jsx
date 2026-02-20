@@ -73,11 +73,9 @@ export function AuthProvider({ children }) {
         return result
       },
       register: async (email, password, userData) => {
+        // Perform registration but do NOT set the user in context.
+        // This prevents auto-login after sign up; user must login manually.
         const result = await authService.register(email, password, userData)
-        if (!result.error && result.user) {
-          setUser(result.user)
-          await loadUserProfile(result.user.id)
-        }
         return result
       },
       logout: async () => {

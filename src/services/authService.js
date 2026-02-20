@@ -70,6 +70,10 @@ export const authService = {
             // Don't throw, user can still use the account
           }
         }
+
+        // Sign out the user after registration so they're not automatically logged in
+        // User must login manually after registration
+        await supabase.auth.signOut()
       }
 
       return { user: authData.user, error: null }
@@ -83,14 +87,44 @@ export const authService = {
    */
   async login(email, password) {
     try {
+      const trimmedEmail = email.trim().toLowerCase()
+      const trimmedPassword = password.trim()
+      
+      console.log('🔐 Login attempt:', { email: trimmedEmail, password: '***' })
+      console.log('📡 Supabase client:', { url: supabase.supabaseUrl, hasKey: !!supabase.supabaseKey })
+      
+      // CHECK: Apakah user ada di users table?
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, email, name')
+        .eq('email', trimmedEmail)
+        .single()
+      
+      if (userError) {
+        console.warn('⚠️ User tidak ditemukan di users table:', userError)
+        console.log('Email yang dicari:', trimmedEmail)
+      } else {
+        console.log('✅ User ditemukan di database:', userData)
+      }
+      
+      // Attempt login dengan Supabase Auth
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
+        email: trimmedEmail,
+        password: trimmedPassword
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Login error dari Supabase Auth:', error)
+        console.error('Error status:', error.status)
+        console.error('Error message:', error.message)
+        console.log('📝 Full error object:', JSON.stringify(error, null, 2))
+        throw error
+      }
+      
+      console.log('✅ Login success:', data.user?.email)
       return { user: data.user, error: null }
     } catch (error) {
+      console.error('❌ Login exception:', error.message)
       return { user: null, error: error.message }
     }
   },
