@@ -17,6 +17,8 @@ export default function BookingPage() {
     description: ''
   })
 
+
+
   useEffect(() => {
     if (influencerId) {
       loadInfluencerData()
@@ -39,6 +41,7 @@ export default function BookingPage() {
         `)
         .eq('id', influencerId)
         .single()
+      
 
       if (error) throw error
       setInfluencer(data)
@@ -57,14 +60,47 @@ export default function BookingPage() {
     }))
   }
 
-  const handleSubmit = (e) => {
+  
+  const handleSubmit = async (e) => {
+    
     e.preventDefault()
-    console.log('Booking submitted:', {
-      influencerId,
-      ...formData
-    })
-    alert('Booking request submitted successfully!')
-    setFormData({
+    // console.log('Booking submitted:', {
+    //   influencerId,
+    //   ...formData
+    // })
+    // send to node function
+    // Transform data sesuai serverless function
+    
+    try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+
+        const orderData = {
+          influencer_id: influencerId,
+          sme_id: user.id,
+          campaign_title: formData.campaignName,
+          campaign_description: formData.description,
+          total_price: parseFloat(formData.budget),
+          number_of_posts: parseInt(formData.numberOfPosts),
+          delivery_deadline: formData.endDate
+        }
+    
+
+
+      const response = await fetch('http://localhost:8088/api/order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderData)
+      })
+      if(!response.ok){
+        throw new Error(result.error || 'Failed to submit booking')
+      }
+
+      alert('Booking submitted successfully')
+      setFormData({
       campaignName: '',
       budget: '',
       numberOfPosts: '',
@@ -72,6 +108,20 @@ export default function BookingPage() {
       endDate: '',
       description: ''
     })
+    } catch (error) {
+      alert(`Error submitting booking: ${error.message}`)
+      console.error('Error fetching:', error)
+    }
+
+    // alert('Booking request submitted successfully!')
+    // setFormData({
+    //   campaignName: '',
+    //   budget: '',
+    //   numberOfPosts: '',
+    //   startDate: '',
+    //   endDate: '',
+    //   description: ''
+    // })
   }
 
   return (

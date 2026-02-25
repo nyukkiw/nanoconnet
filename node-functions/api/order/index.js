@@ -1,11 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
 
-// export async function onRequest(request,context) {
-//  return new Response('Order api is running', {status: 200});
-// }
-
-
 
 const headers = {
     'Content-type': 'application/json',
@@ -14,7 +9,7 @@ const headers = {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 }
 
-// MEMBUAT CLIENT SUPABASE
+
 const supabase = createClient(
     'https://vuxcwysmkimncjhcbfuk.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1eGN3eXNta2ltbmNqaGNiZnVrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDAzODM0OCwiZXhwIjoyMDg1NjE0MzQ4fQ.z-78ytLv5qXVMChTMBj2g5J1YycVH8eNVfQxJ2Iu8Y4'
