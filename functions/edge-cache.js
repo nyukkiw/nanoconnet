@@ -28,15 +28,19 @@ export default async function handler(request) {
       });
     }
 
+    // Resolve SUPABASE_ANON_KEY in a runtime-agnostic way
+    const SUPABASE_ANON_KEY =
+      (typeof Deno !== 'undefined' && Deno?.env?.get && Deno.env.get('SUPABASE_ANON_KEY')) ||
+      (typeof process !== 'undefined' && process?.env && process.env.SUPABASE_ANON_KEY) ||
+      (globalThis && globalThis.SUPABASE_ANON_KEY) ||
+      null;
+
     // Fetch from Supabase (cached at edge)
-    const response = await fetch(
-      \`https://your-supabase-url/influencers/\${influencerId}\`,
-      {
-        headers: {
-          'Authorization': \`Bearer \${Deno.env.get('SUPABASE_ANON_KEY')}\`,
-        },
-      }
-    );
+    const response = await fetch(`https://your-supabase-url/influencers/${influencerId}`, {
+      headers: {
+        Authorization: SUPABASE_ANON_KEY ? `Bearer ${SUPABASE_ANON_KEY}` : undefined,
+      },
+    });
 
     const data = await response.json();
 

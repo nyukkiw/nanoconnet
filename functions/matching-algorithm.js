@@ -1,13 +1,23 @@
-# Node Functions - Business Logic
+// Node Functions - Business Logic
 
-// Import Supabase client
-const { createClient } = require('@supabase/supabase-js');
+// Import Supabase client (ESM)
+import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'your-supabase-url',
-  process.env.SUPABASE_ANON_KEY || 'your-supabase-anon-key'
-);
+// Resolve Supabase config in a runtime-agnostic way
+const SUPABASE_URL =
+  (typeof process !== 'undefined' && process?.env && process.env.SUPABASE_URL) ||
+  (typeof Deno !== 'undefined' && Deno?.env?.get && Deno.env.get('SUPABASE_URL')) ||
+  (globalThis && globalThis.SUPABASE_URL) ||
+  'your-supabase-url';
+
+const SUPABASE_ANON_KEY =
+  (typeof process !== 'undefined' && process?.env && process.env.SUPABASE_ANON_KEY) ||
+  (typeof Deno !== 'undefined' && Deno?.env?.get && Deno.env.get('SUPABASE_ANON_KEY')) ||
+  (globalThis && globalThis.SUPABASE_ANON_KEY) ||
+  'your-supabase-anon-key';
+
+// Initialize Supabase client
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /**
  * Matching Algorithm Function
@@ -104,7 +114,4 @@ async function getAIRecommendations(smeId) {
   }
 }
 
-module.exports = {
-  calculateMatchScore,
-  getAIRecommendations
-};
+export { calculateMatchScore, getAIRecommendations };
